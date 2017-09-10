@@ -1,0 +1,40 @@
+import processing.serial.*;  //Import library serial
+Serial port;                 //Buat serial objek bernama "port"
+String suhu_celcius = "";    //Variable untuk suhu Celcius
+String suhu_fahrenheit = ""; //Variable untuk suhu Fahrenheit
+String data = "";
+int index = 0;
+PFont font;
+
+void setup()
+{
+  size(400,400); //Buat objek 400x400 pixel
+  port = new Serial(this, "COM3", 9600); //Sesuaikan "COM3"
+  port.bufferUntil('.'); 
+  font = loadFont("AgencyFB-Bold-200.vlw"); //Load font
+  textFont(font, 200); //Jadikan size font 200
+}
+
+void draw()
+{
+  background(0,0,0); //Jadikan background hitam
+  fill(46, 209, 2);  //Warna text suhu celcius dalam (R,G,B)
+  text(suhu_celcius, 70, 175); //Koordinat text suhu celcius
+  fill(0, 102, 153); //Warna text suhu fahrenheit dalam (R,G,B)
+  text(suhu_fahrenheit, 70, 370); //Koordinat text suhu fahrenheit
+}
+  
+void serialEvent (Serial port)
+{
+  //Ambil seluruh string dari serial
+  data = port.readStringUntil('.');
+  //Hapus periode akhir dari data string
+  data = data.substring(0, data.length() - 1);
+  
+  //Mencari koma antara celcius dan fahrenheit
+  index = data.indexOf(",");
+  //Mendapatkan suhu celcius
+  suhu_celcius = data.substring(0, index);
+  //Mendapatkan suhu fahrenheit
+  suhu_fahrenheit = data.substring(index+1, data.length());
+}

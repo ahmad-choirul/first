@@ -1,0 +1,155 @@
+/*
+ * Obstacle avoiding robot.
+ * dc motor 5 volt.
+ * motor kiri = m3
+ * motor kanan = m4
+ * ultrasonic sensor = trigger pin 3, echo pin 11 
+ * servo motor = pin 9/servo 2
+ * by Ahmad Choirul jul 2016
+ */
+
+#include <AFMotor.h>
+#include <Servo.h>
+#include <NewPing.h>
+#define trigPin  3 
+#define echoPin  11
+const int scanservopin = 6;
+const int distancelimit = 20; //in cm
+AF_DCMotor motor1(3, MOTOR12_64KHZ); //mendeklarasikan m4 menjadi motor 1, 64KHz
+AF_DCMotor motor2(4, MOTOR12_64KHZ); //mendeklarasikan m3 menjadi motor 2, 64KHz
+Servo myservo;  // membuat variabel servo dengan nama myservo 
+
+void setup() {
+pinMode(trigPin, OUTPUT);
+pinMode(echoPin, INPUT);
+myservo.attach(9);
+myservo.write(90);
+motor1.setSpeed(255); //Set kecepatan motor 255 (Range 0-255)
+motor2.setSpeed(255); //Set kecepatan motor 255 (Range 0-255)
+Serial.begin(9600);
+delay(2000);
+go();
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+go();
+int jarak = ping();
+  if (jarak<distancelimit){
+    stopp();//berhenti dan malkukan pengecekan jarak
+    char turndir = scan();
+        switch (turndir){
+            case 'l'://belok kiri
+            turnleft();
+            break;
+
+            case 'r'://belok kanan
+            turnright();
+            break;
+
+            case 'b'://balik arah
+            turnaround();
+            break;
+            }
+  }
+  delay(100);
+}
+
+int ping(){
+
+  long duration, distance;
+  //Send Pulse
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(5);
+  digitalWrite(trigPin, LOW);
+  //Read Echo
+  duration = pulseIn(echoPin, HIGH);
+  // convert duration menjadi distance
+  distance = (duration/2) / 29.1;
+ Serial.print(distance);
+  return distance;
+
+}
+
+void go(){
+  Serial.println("maju");
+motor1.run(FORWARD);      // motor 1 maju
+motor2.run(FORWARD);      // motor 2 maju
+}
+void turnleft(){
+  Serial.println("kiri");
+ motor1.run(BACKWARD);     // motor 1 mundur
+ motor2.run(FORWARD);      //motor 2 maju
+  delay(400); // run motors this way for 400ms
+
+  motor1.run(FORWARD);      // turn it on going forward
+  motor2.run(FORWARD);      // turn it on going forward
+}
+
+void turnright(){
+  Serial.println("kanan");
+motor1.run(FORWARD);      // turn motor 1 forward
+  motor2.run(BACKWARD);     // turn motor 2 backward
+  delay(400); // run motors this way for 400ms
+
+  motor1.run(FORWARD);      // set both motors back to forward
+  motor2.run(FORWARD); 
+}
+void turnaround(){
+Serial.println("balik");
+motor1.run(FORWARD);      // turn motor 1 forward
+  motor2.run(BACKWARD);     // turn motor 2 backward
+  delay(400); // run motors this way for 400ms
+
+  motor1.run(BACKWARD);      // set both motors back to forward
+  motor2.run(FORWARD); 
+  delay(400);
+}
+void stopp(){
+  Serial.println("berhenti");
+motor1.run(RELEASE);      // set both motors back to forward
+  motor2.run(RELEASE); 
+delay(1000);
+}
+
+char scan(){
+
+  int leftscanval, centerscanval, rightscanval;
+  char choice;
+
+  //Look left
+  myservo.write(160);
+  Serial.println("hadap kiri ");
+  delay(300);
+  leftscanval = ping();
+
+  //Look right
+  myservo.write(15);
+  Serial.println("hadap kanan ");
+  delay(700);
+  rightscanval = ping();
+
+  //center scan servo
+  myservo.write(90);
+  Serial.println("hadap tengah ");
+  delay(500);
+  centerscanval = ping();
+ 
+
+  if ((leftscanval>rightscanval) && (leftscanval>centerscanval)){
+  choice = 'l';
+  }
+
+  else if ((rightscanval>leftscanval) && (rightscanval>centerscanval)){
+  choice = 'r';
+  }
+
+  else{
+  choice = 'b';
+  }
+
+  return choice;
+
+}
